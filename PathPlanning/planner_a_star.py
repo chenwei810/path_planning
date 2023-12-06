@@ -1,4 +1,5 @@
 import cv2
+import numpy as np
 import sys
 sys.path.append("..")
 import PathPlanning.utils as utils
@@ -11,12 +12,31 @@ class PlannerAStar(Planner):
         self.initialize()
 
     def initialize(self):
-        self.queue = []
+        # self.queue = []
         self.parent = {}
+        self.open_set = []  # open set
+        self.closed_set = []  # closed set
         self.h = {} # Distance from start to node
         self.g = {} # Distance from node to goal
+        self.f = {}  # Total cost
         self.goal_node = None
+        self.img = None
 
+    def get_neighbors(self, node, inter):
+        neighbors = []
+        for i in range(-1, 2):
+            for j in range(-1, 2):
+                if i == 0 and j == 0:
+                    continue
+                new_node = (node[0] + (i * inter), node[1] + (j * inter))
+                if (
+                    0 <= new_node[0] <= self.img.shape[1]
+                    and 0 <= new_node[1] <= self.img.shape[0]
+                    and self.map[new_node[1], new_node[0]] == 1
+                ):
+                    neighbors.append(new_node)
+        return neighbors
+    
     def planning(self, start=(100,200), goal=(375,520), inter=None, img=None):
         if inter is None:
             inter = self.inter
@@ -24,13 +44,41 @@ class PlannerAStar(Planner):
         goal = (int(goal[0]), int(goal[1]))
         # Initialize 
         self.initialize()
-        self.queue.append(start)
+        # self.queue.append(start)
+        self.open_set.append(start)
         self.parent[start] = None
         self.g[start] = 0
         self.h[start] = utils.distance(start, goal)
-        while(1):
+        self.f[start] = self.g[start] + self.h[start]
+        self.img = img
+        # while self.open_set:
+        while (1):
             # TODO: A Star Algorithm
-            break
+            current_node = min(self.open_set, key=lambda x: self.f[x])
+            if current_node == goal:
+                self.goal_node = current_node
+                break
+
+            self.open_set.remove(current_node)
+            self.closed_set.append(current_node)
+
+            neighbors = self.get_neighbors(current_node, inter)
+
+            for neighbor in neighbors:
+                if neighbor in self.closed_set:
+                    continue
+
+                tenteative_g = self.g[current_node] + \
+                    utils.distance(current_node, neighbor)
+
+                if neighbor not in self.open_set or tenteative_g < self.g[neighbor]:
+                    self.parent[neighbor] = current_node
+                    self.g[neighbor] = tenteative_g
+                    self.h[neighbor] = utils.distance(neighbor, goal)
+                    self.f[neighbor] = self.g[neighbor] + self.h[neighbor]
+
+                    if neighbor not in self.open_set:
+                        self.open_set.append(neighbor)
         
         # Extract path
         path = []
