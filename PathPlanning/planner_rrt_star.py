@@ -50,11 +50,14 @@ class PlannerRRTStar(Planner):
         else:        
             return new_node, utils.distance(new_node, from_node)
     
-    def rewire(self, new_node, near_nodes):
-        for child_node in near_nodes:
-            if utils.distance(new_node, child_node) + self.cost[new_node] < self.cost[child_node]:
-                self.ntree[child_node] = new_node
-                self.cost[child_node] = utils.distance(new_node, child_node) + self.cost[new_node]
+    def _near_nodes(self, target_node):
+        near_nodes = []
+        for node in self.ntree:
+            if node == target_node:
+                continue
+            if utils.distance(node, target_node) < self.extend_len:
+                near_nodes.append(node)
+        return near_nodes
 
     def planning(self, start, goal, extend_len=None, img=None):
         if extend_len is None:
@@ -79,22 +82,20 @@ class PlannerRRTStar(Planner):
                 break
                 
             # TODO: Re-Parent & Re-Wire
-            for n in self.ntree:
-                if self.ntree[n] is not None:
-                    if utils.distance(new_node, n) + self.cost[n] < self.cost[new_node]:
-                        # Update parent if the new path is better
-                        self.ntree[new_node] = n
-                        self.cost[new_node] = utils.distance(new_node, n) + self.cost[n]
+            for node in self.ntree:
+                if node == start:
+                    continue
 
-                        # Re-Wire: Check and update children
-                        for child_node in self.ntree:
-                            if utils.distance(new_node, child_node) + self.cost[new_node] < self.cost[child_node]:
-                                self.ntree[child_node] = new_node
-                                self.cost[child_node] = utils.distance(new_node, child_node) + self.cost[new_node]
-            # Check if the goal is reached
-            if utils.distance(new_node, goal) < extend_len:
-                goal_node = new_node
-                break
+                near_nodes = self._near_nodes(node)  # Find nodes in the vicinity
+                
+                for near_node in near_nodes:
+                    if self._check_collision(near_node, node):
+                        continue
+
+                    tentative_cost = self.cost[near_node] + utils.distance(near_node, node)
+                    if tentative_cost < self.cost[node]:
+                        self.ntree[node] = near_node
+                        self.cost[node] = tentative_cost
 
             # Draw
             if img is not None:

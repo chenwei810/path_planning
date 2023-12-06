@@ -1,5 +1,3 @@
-import cv2
-import numpy as np
 import sys
 sys.path.append("..")
 import PathPlanning.utils as utils
@@ -12,7 +10,7 @@ class PlannerAStar(Planner):
         self.initialize()
 
     def initialize(self):
-        # self.queue = []
+        self.queue = []
         self.parent = {}
         self.open_set = []  # open set
         self.closed_set = []  # closed set
@@ -44,14 +42,12 @@ class PlannerAStar(Planner):
         goal = (int(goal[0]), int(goal[1]))
         # Initialize 
         self.initialize()
-        # self.queue.append(start)
         self.open_set.append(start)
         self.parent[start] = None
         self.g[start] = 0
         self.h[start] = utils.distance(start, goal)
         self.f[start] = self.g[start] + self.h[start]
         self.img = img
-        # while self.open_set:
         while (1):
             # TODO: A Star Algorithm
             current_node = min(self.open_set, key=lambda x: self.f[x])
@@ -76,7 +72,6 @@ class PlannerAStar(Planner):
                     self.g[neighbor] = tenteative_g
                     self.h[neighbor] = utils.distance(neighbor, goal)
                     self.f[neighbor] = self.g[neighbor] + self.h[neighbor]
-
                     if neighbor not in self.open_set:
                         self.open_set.append(neighbor)
         
