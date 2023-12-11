@@ -14,8 +14,8 @@ class PlannerAStar(Planner):
         self.parent = {}
         self.open_set = []  # open set
         self.closed_set = []  # closed set
-        self.h = {} # Distance from start to node
-        self.g = {} # Distance from node to goal
+        self.start = {} # Distance from start to node
+        self.goal = {} # Distance from node to goal
         self.f = {}  # Total cost
         self.goal_node = None
         self.img = None
@@ -44,9 +44,9 @@ class PlannerAStar(Planner):
         self.initialize()
         self.open_set.append(start)
         self.parent[start] = None
-        self.g[start] = 0
-        self.h[start] = utils.distance(start, goal)
-        self.f[start] = self.g[start] + self.h[start]
+        self.start[start] = utils.distance(start, goal)
+        self.goal[start] = 0
+        self.f[start] = self.goal[start] + self.start[start]
         self.img = img
         while (1):
             # TODO: A Star Algorithm
@@ -64,14 +64,14 @@ class PlannerAStar(Planner):
                 if neighbor in self.closed_set:
                     continue
 
-                tenteative_g = self.g[current_node] + \
+                tenteative_g = self.goal[current_node] + \
                     utils.distance(current_node, neighbor)
 
-                if neighbor not in self.open_set or tenteative_g < self.g[neighbor]:
+                if neighbor not in self.open_set or tenteative_g < self.goal[neighbor]:
                     self.parent[neighbor] = current_node
-                    self.g[neighbor] = tenteative_g
-                    self.h[neighbor] = utils.distance(neighbor, goal)
-                    self.f[neighbor] = self.g[neighbor] + self.h[neighbor]
+                    self.start[neighbor] = utils.distance(neighbor, goal)
+                    self.goal[neighbor] = tenteative_g
+                    self.f[neighbor] = self.start[neighbor] + self.goal[neighbor]
                     if neighbor not in self.open_set:
                         self.open_set.append(neighbor)
         

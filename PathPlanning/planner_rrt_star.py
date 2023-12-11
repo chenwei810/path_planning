@@ -80,14 +80,13 @@ class PlannerRRTStar(Planner):
             if utils.distance(near_node, goal) < extend_len:
                 goal_node = near_node
                 break
-                
-            # TODO: Re-Parent & Re-Wire
+            # TODO: Re-Parent   
             for node in self.ntree:
                 if node == start:
                     continue
 
                 near_nodes = self._near_nodes(node)  # Find nodes in the vicinity
-                
+
                 for near_node in near_nodes:
                     if self._check_collision(near_node, node):
                         continue
@@ -96,6 +95,16 @@ class PlannerRRTStar(Planner):
                     if tentative_cost < self.cost[node]:
                         self.ntree[node] = near_node
                         self.cost[node] = tentative_cost
+
+                # TODO: Re-Wire
+                for rewired_node in self._near_nodes(node):
+                    if self._check_collision(rewired_node, node):
+                        continue
+
+                    rewired_cost = self.cost[node] + utils.distance(node, rewired_node)
+                    if rewired_cost < self.cost[rewired_node]:
+                        self.ntree[rewired_node] = node
+                        self.cost[rewired_node] = rewired_cost
 
             # Draw
             if img is not None:
